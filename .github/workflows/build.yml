@@ -1,0 +1,69 @@
+name: Build Windows Executable
+
+on:
+  push:
+    tags:
+      - 'v*'  # 当推送版本标签时触发
+  workflow_dispatch:  # 允许手动触发
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        
+    - name: Build executable
+      run: |
+        python build.py
+        
+    - name: Create release package
+      run: |
+        python create_installer.py
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: VideoScreensaver-Windows
+        path: |
+          dist/screensaver.exe
+          config.json
+          README.md
+          
+    - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          dist/screensaver.exe
+          视频屏保程序_安装包.zip
+        body: |
+          ## 🎬 视频屏保程序 ${{ github.ref_name }}
+          
+          ### 📥 下载说明
+          - **screensaver.exe**: 单文件版本，直接运行
+          - **视频屏保程序_安装包.zip**: 完整安装包，包含安装器
+          
+          ### 🚀 使用方法
+          1. 下载文件到Windows电脑
+          2. 将您的MP4视频重命名为`video.mp4`
+          3. 双击运行程序
+          
+          ### 📋 系统要求
+          - Windows 7/8/10/11 (64位)
+          - 支持MP4格式视频文件
+          
+          更多详细说明请查看 [README.md](README.md)
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
