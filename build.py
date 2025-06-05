@@ -66,120 +66,60 @@ def check_requirements():
     return True
 
 
-def build_exe():
-    """构建可执行文件"""
-    print("\n" + "="*50)
-    print("🔨 开始构建可执行文件")
-    print("="*50)
+def build_single_file():
+    """构建单文件版本"""
+    print("🔨 构建单文件版本...")
     
-    # 清理之前的构建
-    dist_dir = Path("dist")
-    build_dir = Path("build")
-    
-    if dist_dir.exists():
-        print("清理 dist 目录...")
-        shutil.rmtree(dist_dir)
-    
-    if build_dir.exists():
-        print("清理 build 目录...")
-        shutil.rmtree(build_dir)
-    
-    # PyInstaller 参数
-    pyinstaller_args = [
-        "main.py",                          # 主程序文件
-        "--name=screensaver",               # 可执行文件名
-        "--onefile",                        # 打包为单个文件
-        "--windowed",                       # Windows下不显示控制台（对于GUI应用）
-        "--icon=icon.ico",                  # 图标文件（如果存在）
-        "--add-data=config.json;.",         # 包含配置文件
-        "--hidden-import=PyQt5.QtMultimedia",
-        "--hidden-import=PyQt5.QtMultimediaWidgets",
-        "--hidden-import=win32api",
-        "--hidden-import=win32gui",
-        "--clean",                          # 清理缓存
-    ]
-    
-    # 如果图标文件不存在，移除图标参数
-    if not os.path.exists("icon.ico"):
-        pyinstaller_args = [arg for arg in pyinstaller_args if not arg.startswith("--icon")]
-    
-    # 构建命令
-    command = f"pyinstaller {' '.join(pyinstaller_args)}"
-    
-    # 执行打包
-    if run_command(command, "使用 PyInstaller 打包"):
-        print("\n✅ 打包完成！")
-        
-        # 检查输出文件
-        exe_file = dist_dir / "screensaver.exe"
-        if exe_file.exists():
-            file_size = exe_file.stat().st_size / (1024 * 1024)  # MB
-            print(f"📦 可执行文件: {exe_file}")
-            print(f"📏 文件大小: {file_size:.1f} MB")
-            
-            # 复制配置文件到dist目录
-            config_dest = dist_dir / "config.json"
-            if not config_dest.exists():
-                shutil.copy("config.json", config_dest)
-                print(f"📄 配置文件已复制到: {config_dest}")
-            
-            return True
-        else:
-            print("❌ 可执行文件生成失败")
-            return False
-    
-    return False
-
-
-def build_directory():
-    """构建目录版本（包含所有依赖文件）"""
-    print("\n" + "="*50)
-    print("📁 构建目录版本")
-    print("="*50)
-    
-    # 清理之前的构建
-    dist_dir = Path("dist")
-    build_dir = Path("build")
-    
-    if dist_dir.exists():
-        shutil.rmtree(dist_dir)
-    if build_dir.exists():
-        shutil.rmtree(build_dir)
-    
-    # PyInstaller 参数（目录版本）
-    pyinstaller_args = [
+    cmd = [
+        "pyinstaller",
         "main.py",
         "--name=screensaver",
-        "--onedir",                         # 打包为目录
-        "--windowed",
+        "--onefile", 
+        "--windowed",  # 重要：不显示控制台窗口
         "--add-data=config.json;.",
         "--hidden-import=PyQt5.QtMultimedia",
         "--hidden-import=PyQt5.QtMultimediaWidgets",
         "--hidden-import=win32api",
         "--hidden-import=win32gui",
-        "--clean",
+        "--clean"
     ]
     
-    if os.path.exists("icon.ico"):
-        pyinstaller_args.append("--icon=icon.ico")
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
+        print("✅ 成功！")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ 构建失败: {e}")
+        print(f"错误输出: {e.stderr}")
+        return False
+
+
+def build_directory():
+    """构建目录版本"""
+    print("🔨 构建目录版本...")
     
-    command = f"pyinstaller {' '.join(pyinstaller_args)}"
+    cmd = [
+        "pyinstaller", 
+        "main.py",
+        "--name=screensaver",
+        "--onedir",
+        "--windowed",  # 重要：不显示控制台窗口
+        "--add-data=config.json;.",
+        "--hidden-import=PyQt5.QtMultimedia",
+        "--hidden-import=PyQt5.QtMultimediaWidgets", 
+        "--hidden-import=win32api",
+        "--hidden-import=win32gui",
+        "--clean"
+    ]
     
-    if run_command(command, "构建目录版本"):
-        print("✅ 目录版本构建完成！")
-        
-        dist_folder = dist_dir / "screensaver"
-        if dist_folder.exists():
-            print(f"📁 程序目录: {dist_folder}")
-            
-            # 计算目录大小
-            total_size = sum(f.stat().st_size for f in dist_folder.rglob('*') if f.is_file())
-            total_size_mb = total_size / (1024 * 1024)
-            print(f"📏 总大小: {total_size_mb:.1f} MB")
-            
-            return True
-    
-    return False
+    try:
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True, encoding='utf-8')
+        print("✅ 成功！")
+        return True
+    except subprocess.CalledProcessError as e:
+        print(f"❌ 构建失败: {e}")
+        print(f"错误输出: {e.stderr}")
+        return False
 
 
 def create_release_package():
@@ -244,11 +184,11 @@ def main():
         success = False
         
         if choice == "1":
-            success = build_exe()
+            success = build_single_file()
         elif choice == "2":
             success = build_directory()
         elif choice == "3":
-            success = build_exe()
+            success = build_single_file()
             if success:
                 # 重新构建目录版本前先备份单文件版本
                 single_file = Path("dist/screensaver.exe")

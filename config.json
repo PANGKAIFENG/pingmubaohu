@@ -1,4 +1,14 @@
 {
   "video_path": "video.mp4",
-  "idle_minutes": 5
+  "idle_time_minutes": 5,
+  "idle_time_seconds": 0,
+  "volume": 50,
+  "loop": true,
+  "quick_presets": {
+    "测试模式": {"minutes": 0, "seconds": 10},
+    "演示模式": {"minutes": 0, "seconds": 30}, 
+    "办公模式": {"minutes": 3, "seconds": 0},
+    "默认模式": {"minutes": 5, "seconds": 0},
+    "长时模式": {"minutes": 10, "seconds": 0}
+  }
 } 
